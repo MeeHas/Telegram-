@@ -1,0 +1,95 @@
+<?php
+
+// تعريف التوكن
+define('API_KEY', '7554474413:AAGsfj7hrhXNqc84m8CUdESmbA7GYLl_QW4');
+
+// وظيفة الاتصال بواجهة Telegram API
+function bot($method, $datas = []) {
+    $url = "https://api.telegram.org/bot" . API_KEY . "/" . $method;
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $datas);
+    $res = curl_exec($ch);
+    if (curl_error($ch)) {
+        return curl_error($ch);
+    } else {
+        return json_decode($res);
+    }
+}
+
+// استقبال التحديثات من Telegram
+$update = json_decode(file_get_contents("php://input"));
+$message = $update->message;
+$chat_id = $message->chat->id;
+$text = $message->text;
+
+// رسالة الترحيب عند استخدام الأمر /start
+if ($text == "/start") {
+    bot('sendMessage', [
+        'chat_id' => $chat_id,
+        'text' => "مرحبًا بك في بوت القرآن الكريم 📖.
+
+- يمكنك الاستماع إلى أي سورة عن طريق كتابة اسمها.
+- إذا واجهت أي مشكلة، يرجى التواصل مع المطور.
+مثال: أرسل *الفاتحة* أو *البقرة* للاستماع.",
+        'parse_mode' => "markdown",
+    ]);
+}
+
+// روابط السور القرآنية
+$sura_links = [
+    "الفاتحة" => "https://server7.mp3quran.net/basit/001.mp3",
+    "البقرة" => "https://server7.mp3quran.net/basit/002.mp3",
+    "آل عمران" => "https://server7.mp3quran.net/basit/003.mp3",
+    "النساء" => "https://server7.mp3quran.net/basit/004.mp3",
+    "المائدة" => "https://server7.mp3quran.net/basit/005.mp3",
+    "الأنعام" => "https://server7.mp3quran.net/basit/006.mp3",
+    "الأعراف" => "https://server7.mp3quran.net/basit/007.mp3",
+    "الأنفال" => "https://server7.mp3quran.net/basit/008.mp3",
+    "التوبة" => "https://server7.mp3quran.net/basit/009.mp3",
+    "يونس" => "https://server7.mp3quran.net/basit/010.mp3",
+    "هود" => "https://server7.mp3quran.net/basit/011.mp3",
+    "يوسف" => "https://server7.mp3quran.net/basit/012.mp3",
+    "الرعد" => "https://server7.mp3quran.net/basit/013.mp3",
+    "إبراهيم" => "https://server7.mp3quran.net/basit/014.mp3",
+    "الحجر" => "https://server7.mp3quran.net/basit/015.mp3",
+    "النحل" => "https://server7.mp3quran.net/basit/016.mp3",
+    "الإسراء" => "https://server7.mp3quran.net/basit/017.mp3",
+    "الكهف" => "https://server7.mp3quran.net/basit/018.mp3",
+    "مريم" => "https://server7.mp3quran.net/basit/019.mp3",
+    "طه" => "https://server7.mp3quran.net/basit/020.mp3",
+    "الأنبياء" => "https://server7.mp3quran.net/basit/021.mp3",
+    "الحج" => "https://server7.mp3quran.net/basit/022.mp3",
+    "المؤمنون" => "https://server7.mp3quran.net/basit/023.mp3",
+    "النور" => "https://server7.mp3quran.net/basit/024.mp3",
+    "الفرقان" => "https://server7.mp3quran.net/basit/025.mp3",
+    "الشعراء" => "https://server7.mp3quran.net/basit/026.mp3",
+    "النمل" => "https://server7.mp3quran.net/basit/027.mp3",
+    "القصص" => "https://server7.mp3quran.net/basit/028.mp3",
+    "العنكبوت" => "https://server7.mp3quran.net/basit/029.mp3",
+    "الروم" => "https://server7.mp3quran.net/basit/030.mp3",
+    "لقمان" => "https://server7.mp3quran.net/basit/031.mp3",
+    "السجدة" => "https://server7.mp3quran.net/basit/032.mp3",
+    "الأحزاب" => "https://server7.mp3quran.net/basit/033.mp3",
+    "سبأ" => "https://server7.mp3quran.net/basit/034.mp3",
+    "فاطر" => "https://server7.mp3quran.net/basit/035.mp3",
+    "يس" => "https://server7.mp3quran.net/basit/036.mp3",
+    "الصافات" => "https://server7.mp3quran.net/basit/037.mp3",
+    "ص" => "https://server7.mp3quran.net/basit/038.mp3",
+    "الزمر" => "https://server7.mp3quran.net/basit/039.mp3",
+];
+
+// إرسال السورة بناءً على النص
+if (array_key_exists($text, $sura_links)) {
+    bot('sendAudio', [
+        'chat_id' => $chat_id,
+        'audio' => $sura_links[$text],
+        'caption' => "استمع إلى سورة $text 📖",
+    ]);
+} else if ($text != "/start") {
+    bot('sendMessage', [
+        'chat_id' => $chat_id,
+        'text' => "عذرًا، لم أتمكن من التعرف على السورة. يرجى التأكد من كتابة اسم السورة بشكل صحيح.",
+    ]);
+}
